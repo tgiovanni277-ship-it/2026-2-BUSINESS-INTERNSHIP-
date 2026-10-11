@@ -126,6 +126,7 @@ activar tráfico real.
 
 ## Documentación y pendientes
 
+- `docs/Manual-Relay-Solicitudes.docx`: manual completo de usuario, operación y desarrollo.
 - `docs/PRESENTACION.md`: resumen ejecutivo, alcance, evidencia y decisiones requeridas.
 - docs/Relay-Solicitudes-Presentacion.pptx: presentación ejecutiva editable de siete diapositivas.
 - `docs/GUIA-DEMO.md`: guion de siete minutos y recuperación rápida.
