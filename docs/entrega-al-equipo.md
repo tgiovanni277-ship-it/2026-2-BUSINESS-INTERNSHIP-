@@ -209,9 +209,9 @@ workflow n8n, Dockerfiles, Compose, Caddyfile y documentación. Contiene únicam
 archivos de ejemplo de configuración; no incluye .env, .env.dev, .env.local,
 node_modules, .next, volúmenes Docker, .git ni el antiguo web.zip.
 
-La información privada de despliegue debe configurarse por separado. La guía
-histórica dentro de docs/legacy está identificada como anterior al cambio de
-arquitectura; README.md y docs/arquitectura.md describen la versión actual.
+La información privada de despliegue debe configurarse por separado. `README.md`,
+`docs/arquitectura.md`, `docs/PRESENTACION.md` y `docs/GUIA-DEMO.md` describen
+la versión actual y el recorrido de demostración.
 
 La propuesta acotada para formulario administrado en GHL y entrevistas por voz
 está en `docs/propuesta-ghl-n8n-retell.md`. Es una fase posterior y no forma parte

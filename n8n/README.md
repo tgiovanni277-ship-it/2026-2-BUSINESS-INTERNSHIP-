@@ -26,7 +26,7 @@ la elegibilidad se evalúa por separado. El override local guarda ejecuciones
 exitosas para demostración; la configuración base no las conserva y la auditoría
 durable permanece en la base Relay.
 
-`ventana-llamada.js` e `interpretar-resultado.js` se conservan para la siguiente
-fase de telefonía. No están conectados al workflow importable. Su integración
-requiere la cola de llamadas, credenciales Retell/Vapi, política de contacto y
-mapeo de pipeline/notificaciones de la empresa.
+`future/ventana-llamada.js` y `future/interpretar-resultado.js` se conservan para
+la siguiente fase de telefonía. No están conectados al workflow importable. Su
+integración requiere la cola de llamadas, credenciales Retell/Vapi, política de
+contacto y mapeo de pipeline/notificaciones de la empresa.

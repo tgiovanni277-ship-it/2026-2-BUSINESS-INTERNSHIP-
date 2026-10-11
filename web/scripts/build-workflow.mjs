@@ -1,9 +1,10 @@
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 
 const root = new URL("../../n8n/", import.meta.url);
-const code = await readFile(new URL("score.js", root), "utf8");
-const validationCode = await readFile(new URL("validar-candidato.js", root), "utf8");
-const nextStepCode = await readFile(new URL("preparar-siguiente-paso.js", root), "utf8");
+const normalizeNewlines = (value) => value.replace(/\r\n/g, "\n");
+const code = normalizeNewlines(await readFile(new URL("score.js", root), "utf8"));
+const validationCode = normalizeNewlines(await readFile(new URL("validar-candidato.js", root), "utf8"));
+const nextStepCode = normalizeNewlines(await readFile(new URL("preparar-siguiente-paso.js", root), "utf8"));
 const workflow = {
   id: "relayClassifyWorkflow1",
   name: "Relay - Clasificar solicitud",

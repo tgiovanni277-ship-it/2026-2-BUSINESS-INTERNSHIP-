@@ -42,6 +42,9 @@ test("workflow export uses authenticated webhook and current scoring code", asyn
   assert.equal(flow.active, false);
   assert.equal(flow.nodes[0].parameters.authentication, "headerAuth");
   assert.equal(flow.nodes[0].parameters.responseMode, "responseNode");
-  const source = await readFile(new URL("../../n8n/score.js", import.meta.url), "utf8");
-  assert.equal(flow.nodes.find((node) => node.id === "relay-score").parameters.jsCode, source);
+  const source = (await readFile(new URL("../../n8n/score.js", import.meta.url), "utf8"))
+    .replace(/\r\n/g, "\n");
+  const exportedCode = flow.nodes.find((node) => node.id === "relay-score").parameters.jsCode
+    .replace(/\r\n/g, "\n");
+  assert.equal(exportedCode, source);
 });

@@ -126,11 +126,14 @@ activar tráfico real.
 
 ## Documentación y pendientes
 
+- `docs/PRESENTACION.md`: resumen ejecutivo, alcance, evidencia y decisiones requeridas.
+- docs/Relay-Solicitudes-Presentacion.pptx: presentación ejecutiva editable de siete diapositivas.
+- `docs/GUIA-DEMO.md`: guion de siete minutos y recuperación rápida.
+- docs/VALIDACION.md: resultados reproducibles de pruebas, lint y compilación.
 - `docs/arquitectura.md`: modelo de datos, contratos, idempotencia y límites.
 - `docs/pruebas-y-despliegue.md`: pruebas del equipo, migraciones, staging y respaldos.
 - `docs/propuesta-ghl-n8n-retell.md`: alcance propuesto para formulario GHL y llamadas de la siguiente fase.
 - `n8n/README.md`: importación del workflow y scripts de futuras llamadas.
-- `docs/legacy/README-before-postgres.md`: guía anterior conservada como referencia histórica; no describe el flujo vigente.
 
 Quedan pendientes la aprobación de reglas/consentimiento, credenciales reales,
 pipeline y campos GHL, cola de telefonía, Retell/Vapi y notificaciones. La cola
@@ -138,4 +141,5 @@ implementada procesa clasificación y CRM; no es aún una cola de llamadas.
 
 ## Entrega al equipo
 
-Consulta docs/entrega-al-equipo.md para explicar avances, pendientes y ejecutar la demostración desde Git Bash.
+Empieza por `docs/PRESENTACION.md` y utiliza `docs/GUIA-DEMO.md` durante la
+demostración. `docs/entrega-al-equipo.md` conserva el detalle operativo.

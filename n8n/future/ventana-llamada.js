@@ -1,4 +1,4 @@
-const d = $('Score').first().json;
+const d = $('Calcular puntaje').first().json;
 const VENTANAS = { morning: [9, 12], afternoon: [12, 17], evening: [17, 20] };
 const [ini, fin] = VENTANAS[d.horario];
 
