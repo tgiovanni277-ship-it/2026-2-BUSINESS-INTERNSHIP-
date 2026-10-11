@@ -1,0 +1,176 @@
+{
+  "id": "relayClassifyWorkflow1",
+  "name": "Relay - Clasificar solicitud",
+  "active": false,
+  "nodes": [
+    {
+      "id": "relay-webhook",
+      "name": "Solicitud",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "relay-classify",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "relay-classify",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "relayHeaderAuth1",
+          "name": "Relay webhook secret"
+        }
+      }
+    },
+    {
+      "id": "relay-load-candidate",
+      "name": "Buscar lead en PostgreSQL",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "SELECT payload || jsonb_build_object('reglas', $2::jsonb) AS body FROM relay_n8n_candidates WHERE application_id = $1::uuid",
+        "options": {
+          "queryReplacement": "={{ [$('Solicitud').first().json.body.applicationId, JSON.stringify($('Solicitud').first().json.body.reglas)] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "relayPostgresReader1",
+          "name": "Relay PostgreSQL read-only"
+        }
+      }
+    },
+    {
+      "id": "relay-validate",
+      "name": "Validar candidato",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// n8n Code node, Run Once for All Items.\nconst row = $input.first().json;\nconst d = row?.body;\nconst cfg = d?.reglas;\n\nif (!d || d.schemaVersion !== 1 || typeof d.applicationId !== \"string\" ||\n    !cfg || typeof cfg.version !== \"string\" || !Number.isFinite(cfg.lat) ||\n    !Number.isFinite(cfg.lng) || !Number.isFinite(cfg.radioOk) ||\n    !Number.isFinite(cfg.radioRev) || cfg.radioOk < 0 || cfg.radioRev < cfg.radioOk ||\n    !Number.isFinite(cfg.minScore) || cfg.minScore < 0 || cfg.minScore > 100 ||\n    !Number.isFinite(d.ubicacion?.lat) || !Number.isFinite(d.ubicacion?.lng) ||\n    !d.consentimiento?.aceptado || !d.respuestas) {\n  throw new Error(\"Invalid candidate contract\");\n}\n\nconst r = d.respuestas;\nif (![\"yes\", \"no\"].includes(r.autorizacion) || ![\"yes\", \"no\"].includes(r.transporte) ||\n    ![\"full_time\", \"part_time\"].includes(r.disponibilidad) ||\n    ![\"0_1\", \"1_3\", \"3_plus\"].includes(r.experiencia) ||\n    ![\"morning\", \"afternoon\", \"evening\"].includes(d.horario)) {\n  throw new Error(\"Invalid candidate answers\");\n}\n\nreturn [{ json: d }];\n\n"
+      }
+    },
+    {
+      "id": "relay-score",
+      "name": "Calcular puntaje",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        740,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// n8n Code node, Run Once for All Items. Authentication belongs to the Webhook node.\nconst input = $input.first().json;\nconst d = input.body ?? input;\nconst cfg = d?.reglas;\nif (!d || d.schemaVersion !== 1 || typeof d.applicationId !== \"string\" ||\n    !cfg || typeof cfg.version !== \"string\" || !Number.isFinite(cfg.lat) ||\n    !Number.isFinite(cfg.lng) || !Number.isFinite(cfg.radioOk) ||\n    !Number.isFinite(cfg.radioRev) || cfg.radioOk < 0 || cfg.radioRev < cfg.radioOk ||\n    !Number.isFinite(cfg.minScore) || cfg.minScore < 0 || cfg.minScore > 100 ||\n    !Number.isFinite(d.ubicacion?.lat) || !Number.isFinite(d.ubicacion?.lng) ||\n    !d.consentimiento?.aceptado || !d.respuestas) {\n  throw new Error(\"Invalid classification contract\");\n}\nconst r = d.respuestas;\nif (![\"yes\", \"no\"].includes(r.autorizacion) || ![\"yes\", \"no\"].includes(r.transporte) ||\n    ![\"full_time\", \"part_time\"].includes(r.disponibilidad) ||\n    ![\"0_1\", \"1_3\", \"3_plus\"].includes(r.experiencia)) {\n  throw new Error(\"Invalid answers\");\n}\nconst rad = (x) => (x * Math.PI) / 180;\nfunction millas(lat1, lng1, lat2, lng2) {\n  const a = Math.sin(rad(lat2 - lat1) / 2) ** 2 +\n    Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(rad(lng2 - lng1) / 2) ** 2;\n  return 3958.8 * 2 * Math.asin(Math.sqrt(Math.min(1, a)));\n}\nconst dist = millas(d.ubicacion.lat, d.ubicacion.lng, cfg.lat, cfg.lng);\nconst motivos = [];\nlet estado = \"precalificado\";\nif (r.autorizacion === \"no\") { estado = \"no_elegible\"; motivos.push(\"sin autorización de trabajo\"); }\nif (dist > cfg.radioRev) { estado = \"no_elegible\"; motivos.push(\"fuera de radio\"); }\nif (dist > cfg.radioOk && dist <= cfg.radioRev) {\n  if (estado === \"precalificado\") estado = \"revision\";\n  motivos.push(\"distancia intermedia\");\n}\nif (r.transporte === \"no\") {\n  if (estado === \"precalificado\") estado = \"revision\";\n  motivos.push(\"sin transporte confiable\");\n}\nconst score = (dist <= cfg.radioOk ? 40 : 15) +\n  (r.transporte === \"yes\" ? 20 : 0) + (r.disponibilidad === \"full_time\" ? 20 : 10) +\n  (r.experiencia === \"3_plus\" ? 20 : r.experiencia === \"1_3\" ? 10 : 0);\nif (score < cfg.minScore) {\n  if (estado === \"precalificado\") estado = \"revision\";\n  motivos.push(\"puntaje inferior al umbral\");\n}\nreturn [{ json: {\n  applicationId: d.applicationId, estado, score,\n  distanciaMi: Math.round(dist * 10) / 10, motivos, rulesVersion: cfg.version,\n  horario: d.horario,\n} }];\r\n"
+      }
+    },
+    {
+      "id": "relay-next-step",
+      "name": "Preparar siguiente paso",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        980,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// This node plans the next action. It does not place calls or modify GHL.\nconst d = $input.first().json;\nconst siguienteAccion = d.estado === \"precalificado\"\n  ? \"preparar_llamada\"\n  : d.estado === \"revision\"\n    ? \"revision_humana\"\n    : \"cerrar_sin_llamada\";\n\nreturn [{\n  json: {\n    ...d,\n    siguienteAccion,\n    ventanaPreferida: d.horario,\n    origenDatos: \"postgresql\",\n  },\n}];\n\n"
+      }
+    },
+    {
+      "id": "relay-response",
+      "name": "Devolver clasificación",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1220,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Solicitud": {
+      "main": [
+        [
+          {
+            "node": "Buscar lead en PostgreSQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar lead en PostgreSQL": {
+      "main": [
+        [
+          {
+            "node": "Validar candidato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar candidato": {
+      "main": [
+        [
+          {
+            "node": "Calcular puntaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular puntaje": {
+      "main": [
+        [
+          {
+            "node": "Preparar siguiente paso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar siguiente paso": {
+      "main": [
+        [
+          {
+            "node": "Devolver clasificación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "none"
+  },
+  "pinData": {}
+}

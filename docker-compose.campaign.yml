@@ -1,0 +1,16 @@
+# Capacidad inicial para una campaña. Ajustar solo después de una prueba de carga.
+services:
+  web:
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 768M
+  relay-worker:
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 512M

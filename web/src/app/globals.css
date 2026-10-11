@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+body {
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 5% 0%, #e1f1f6 0%, transparent 50%), #f4f7f9;
+  color: #143340;
+  font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: #c4e7f3;
+  color: #073d51;
+}
+
+.rely-input {
+  min-height: 48px;
+}

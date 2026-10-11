@@ -1,0 +1,10 @@
+{
+  "WH-001": {
+    "version": "WH-001-example-v1",
+    "lat": 35.7796,
+    "lng": -78.6382,
+    "radioOk": 25,
+    "radioRev": 40,
+    "minScore": 0
+  }
+}

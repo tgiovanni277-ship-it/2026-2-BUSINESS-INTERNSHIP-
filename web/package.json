@@ -1,0 +1,38 @@
+{
+  "name": "web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
+    "worker": "node --env-file-if-exists=.env.local scripts/worker.mjs",
+    "jobs": "node --env-file-if-exists=.env.local scripts/jobs.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:integration": "node --env-file-if-exists=.env.local --test tests/integration/*.test.mjs",
+    "workflow:build": "node scripts/build-workflow.mjs"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
+    "libphonenumber-js": "^1.13.13",
+    "next": "^16.4.0",
+    "pg": "^8.23.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-hook-form": "^7.88.0",
+    "redis": "^5.12.1",
+    "zipcodes": "^8.0.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@tailwindcss/postcss": "^4",
+    "eslint": "^9",
+    "eslint-config-next": "^16.4.0",
+    "tailwindcss": "^4",
+    "yaml": "^2.9.1"
+  },
+  "type": "module"
+}

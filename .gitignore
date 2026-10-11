@@ -1,0 +1,8 @@
+.env
+.env.local
+.env.dev
+.env.staging
+.env.production
+work/
+.npm-cache/
+web/.npm-cache/
