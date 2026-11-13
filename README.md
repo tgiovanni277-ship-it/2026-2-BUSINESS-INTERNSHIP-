@@ -3,7 +3,7 @@
 A candidate intake and pre-screening prototype built to capture applications reliably and process them through an asynchronous workflow.
 
 > **Status:** Local prototype. The development environment uses a mock CRM integration. This repository does not represent a production deployment.  
-> **Live demo:** Coming soon.
+> **Live demo:** https://relay-solicitudes-web-source.vercel.app 
 
 ## Project overview
 
