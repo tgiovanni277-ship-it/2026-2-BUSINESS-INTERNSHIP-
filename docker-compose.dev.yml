@@ -6,14 +6,14 @@ services:
       RELAY_ENV: development
       GHL_MODE: mock
   relay-postgres:
-    ports: ["127.0.0.1:5433:5432"]
+    ports: ["127.0.0.1:5434:5432"]
   redis:
-    ports: ["127.0.0.1:6379:6379"]
+    ports: ["127.0.0.1:6380:6379"]
   n8n:
-    ports: ["127.0.0.1:5678:5678"]
+    ports: ["127.0.0.1:5679:5678"]
     environment:
       N8N_HOST: localhost
       N8N_PROTOCOL: http
       N8N_SECURE_COOKIE: "false"
-      N8N_WEBHOOK_URL: http://localhost:5678/
+      N8N_WEBHOOK_URL: http://localhost:5679/
       EXECUTIONS_DATA_SAVE_ON_SUCCESS: all

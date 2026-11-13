@@ -31,7 +31,7 @@ deben aparecer saludables. `relay-migrate` debe terminar con código 0.
 
 En una instalación nueva de n8n:
 
-1. Abre `http://localhost:5678` y crea el usuario propietario local.
+1. Abre `http://localhost:5679` y crea el usuario propietario local.
 2. Importa `n8n/workflows/relay-classify.json`.
 3. Crea `Relay webhook secret` como credencial Header Auth:
    - Name: `x-relay-secret`
@@ -48,7 +48,7 @@ En una instalación nueva de n8n:
 ## 2. Pestañas que deben estar preparadas
 
 - Formulario: `http://localhost:3000/warehouse-associate?lang=es`
-- Workflow: `http://localhost:5678`
+- Workflow: `http://localhost:5679`
 - Terminal en la raíz del proyecto.
 - Este documento abierto como guion.
 

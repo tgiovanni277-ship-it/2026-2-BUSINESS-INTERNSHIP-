@@ -89,11 +89,11 @@ Requisitos: Docker Desktop instalado y activo, Docker Compose v2, Git Bash y
 acceso a Internet para descargar imágenes/dependencias. No requiere npm ni Node
 instalados en el equipo anfitrión para esta modalidad.
 
-Descomprimir relay-pruebas.zip en una carpeta propia y abrir Git Bash dentro de
-esa carpeta. Si se usa la ubicación original:
+Clonar o abrir el repositorio y ejecutar los comandos desde la carpeta raíz que
+contiene `docker-compose.yml`. En esta máquina, la ruta es:
 
 ```bash
-cd /c/dev/practicas/relay
+cd /c/dev/practicas/relay-solicitudes
 ```
 
 En cualquier otra ubicación, entrar a la carpeta que contiene docker-compose.yml.
@@ -124,13 +124,14 @@ terminar en Exited (0): aplica el esquema y finaliza normalmente.
 | Servicio | Acceso local |
 | --- | --- |
 | Formulario | http://localhost:3000/warehouse-associate?lang=es |
-| Editor n8n | http://localhost:5678 |
-| PostgreSQL Relay | 127.0.0.1:5433, base relay, usuario relay, contraseña de .env.dev |
+| Editor n8n | http://localhost:5679 |
+| PostgreSQL Relay | 127.0.0.1:5434, base relay, usuario relay, contraseña de .env.dev |
+| Redis | 127.0.0.1:6380 |
 | PostgreSQL n8n | Interno a Docker; sin puerto publicado |
 
 ## Configurar n8n
 
-1. Abrir localhost:5678 y crear el usuario de la instancia local.
+1. Abrir localhost:5679 y crear el usuario de la instancia local.
 2. Importar n8n/workflows/relay-classify.json.
 3. Crear una credencial Header Auth llamada `Relay webhook secret`:
    Name=x-relay-secret y Value igual a N8N_WEBHOOK_SECRET de .env.dev. El
@@ -145,6 +146,29 @@ terminar en Exited (0): aplica el esquema y finaliza normalmente.
 
 El flujo visible contiene Solicitud, Buscar lead en PostgreSQL, Validar candidato,
 Calcular puntaje, Preparar siguiente paso y Devolver clasificación.
+
+## Desarrollo web con recarga
+
+Para ejecutar Next.js fuera de Docker, mantén en Docker las bases, Redis, n8n y
+las migraciones:
+
+```bash
+docker compose --env-file .env.dev \
+  -f docker-compose.yml \
+  -f docker-compose.dev.yml \
+  up -d --build postgres relay-postgres redis n8n relay-migrate
+
+cd web
+if [ ! -f .env.local ]; then cp .env.example .env.local; fi
+npm ci
+npm run dev
+```
+
+En una segunda terminal, desde `web`, ejecuta `npm run worker`. Confirma que
+`web/.env.local` use los puertos publicados por el override local: PostgreSQL
+Relay `5434`, Redis `6380` y n8n `5679`. Las contraseñas de Relay y el secreto
+de n8n deben coincidir con `.env.dev`. No uses estos valores de ejemplo en otros
+ambientes.
 
 ## Demostración sugerida
 
