@@ -11,6 +11,8 @@ Relay Solicitudes provides a bilingual application form and a backend workflow f
 
 When a candidate submits the form, the API stores the application and a processing job in PostgreSQL before returning success. A background worker processes the job, requests a pre-screening result from n8n, stores that result, and attempts CRM synchronization. The durable queue supports retries when a downstream service is unavailable.
 
+https://github.com/user-attachments/assets/dcdc792e-abf7-4e18-b938-6d376bec97fb
+
 ## How it works
 
 ```mermaid
