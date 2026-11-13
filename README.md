@@ -1,72 +1,105 @@
-# 2026-2-BUSINESS-INTERNSHIP-
+# Relay Solicitudes
 
-# Candidate Intake and Pre-Screening Automation
+A candidate intake and pre-screening prototype built to capture applications reliably and process them through an asynchronous workflow.
 
-An academic internship project proposing an automated candidate intake, pre-screening, and follow-up workflow for Rely Workforce Group.
+> **Status:** Local prototype. The development environment uses a mock CRM integration. This repository does not represent a production deployment.  
+> **Live demo:** Coming soon.
 
-## Overview
+## Project overview
 
-The project addresses the manual effort involved in reviewing and contacting candidates generated through digital campaigns. The proposed system would centralize candidate information, validate submissions, detect duplicates, apply job-specific eligibility criteria and scoring, and route follow-up based on each candidate’s results.
+Relay Solicitudes provides a bilingual application form and a backend workflow for receiving candidate information, validating submissions, and preparing them for review.
 
-## Proposed Workflow
+When a candidate submits the form, the API stores the application and a processing job in PostgreSQL before returning success. A background worker processes the job, requests a pre-screening result from n8n, stores that result, and attempts CRM synchronization. The durable queue supports retries when a downstream service is unavailable.
 
-1. Candidates submit their information through a landing page or form linked to Meta Ads campaigns.
-2. The workflow validates the submission and checks for duplicate records.
-3. Job-specific eligibility rules and configurable scoring are applied.
-4. Candidates are routed for initial contact or human review based on the pre-screening outcome.
-5. Retell AI is proposed for initial voice contact.
-6. Candidate status and follow-up are managed in GoHighLevel.
+## How it works
 
-n8n is proposed to orchestrate the workflow and connect the different services.
+```mermaid
+flowchart LR
+    A[Candidate] --> B[Next.js form and API]
+    B --> C[Redis rate limiting]
+    B --> D[(Relay PostgreSQL)]
+    D --> E[Background worker]
+    E --> F[n8n pre-screening]
+    F --> E
+    E --> D
+    E --> G[GoHighLevel]
+    G -. Local development .-> H[Mock CRM result]
+```
 
-## Proposed Technology Stack
+1. The candidate submits an application in English or Spanish.
+2. The API validates the submission and saves it with a processing job.
+3. The worker sends the application to the n8n workflow for pre-screening.
+4. The worker stores the result and processes CRM synchronization.
+5. Failed jobs can be retried or reviewed.
 
-| Tool or service | Proposed role |
-|---|---|
-| Meta Ads | Candidate acquisition channel |
-| Landing page or form | Candidate data collection |
-| n8n | Workflow orchestration |
-| Retell AI | Initial voice contact |
-| GoHighLevel | Candidate CRM and follow-up |
+## Main components
 
-## Planned Deliverables
+- **Web application:** Next.js form and API routes for application intake.
+- **Relay database:** PostgreSQL stores applications, job state, and processing history.
+- **Worker:** Processes queued jobs, retries failures, and coordinates external services.
+- **n8n workflow:** Applies the pre-screening rules using a read-only database view.
+- **Redis:** Provides shared rate limiting for the web application.
+- **GoHighLevel integration:** Implemented behind the worker; local development uses mock mode.
 
-- Requirements and eligibility criteria matrix
-- End-to-end workflow diagram
-- Candidate status catalog
-- Form data contract and payload
-- Technical documentation
-- Controlled testing plan
-- Process metrics dashboard
+## Repository structure
 
-## Repository Documentation
+| Path | Purpose |
+| --- | --- |
+| `web/` | Next.js application, API, worker, database migrations, and tests. |
+| `web/src/config/prequalification.json` | Server-side pre-screening rules supplied to the workflow. |
+| `web/scripts/` | Migration, worker, job-management, and workflow-generation scripts. |
+| `n8n/workflows/relay-classify.json` | Importable n8n classification workflow. |
+| `n8n/score.js` | Source for the workflow’s scoring logic. |
+| `n8n/future/` | Scripts reserved for a future voice workflow; not active in the current flow. |
+| `docs/` | Architecture, local setup, operation, demo, validation, and project handoff documentation. |
+| `docker-compose.yml` | Base services for the application stack. |
+| `docker-compose.dev.yml` | Local development settings, including mock CRM behavior and local port mappings. |
+| `docker-compose.campaign.yml` | Configuration for the campaign deployment profile. |
+| `Caddyfile` | Reverse-proxy configuration used by the production profile. |
+| `.env.example` | Template for non-local environment configuration. |
+| `.env.dev.example` | Local-only development configuration template. |
 
-The implementation guide, architecture, run instructions, validation record,
-and presentation materials are indexed in [docs/README.md](docs/README.md).
-Most supporting documentation is in Spanish.
+## Run locally
 
-## Proposed Timeline
+Requirements: Docker Desktop and Docker Compose v2.
 
-The activities are planned across 14 weeks, from August 1 to November 2, 2026.
+From the repository root in Git Bash:
 
-| Phase | Schedule |
-|---|---|
-| Company familiarization | Weeks 1–2 · August 1–14 |
-| Discovery | Weeks 3–4 · August 15–28 |
-| Technical design | Weeks 5–6 · August 29–September 11 |
-| Candidate intake and screening | Weeks 7–9 · September 12–October 2 |
-| Voice and CRM integration | Weeks 10–11 · October 3–16 |
-| Testing and deployment | Weeks 12–13 · October 17–30 |
-| Optimization | Week 14 · October 31–November 2 |
+```bash
+if [ ! -f .env.dev ]; then
+  cp .env.dev.example .env.dev
+fi
 
-## Project Status
+docker compose --env-file .env.dev \
+  -f docker-compose.yml \
+  -f docker-compose.dev.yml \
+  up -d --build
+```
 
-This repository includes a local Docker Compose prototype for candidate intake
-and pre-screening. Its development configuration simulates the CRM. It has not
-been deployed to production; live company integrations, controlled testing with
-company systems, production measurements, and voice automation remain pending.
-Internship work was carried out locally because server access and credentials
-were not provided.
+Open the form at [http://localhost:3000/warehouse-associate?lang=es](http://localhost:3000/warehouse-associate?lang=es). The local n8n editor is at [http://localhost:5679](http://localhost:5679).
 
-This repository describes a proposed solution and a local prototype. It should
-not be interpreted as evidence of a production system.
+For first-time setup, import `n8n/workflows/relay-classify.json`, configure its local credentials, and activate the workflow. See the [documentation index](docs/README.md) for the complete setup and demo instructions.
+
+To stop the services while retaining local data, run the same Compose command with `down`. Do not add `-v` if you want to keep the database and n8n volumes.
+
+## Documentation
+
+Start with [`docs/README.md`](docs/README.md), which links to:
+
+- [Architecture](docs/arquitectura.md)
+- [Local setup and handoff](docs/entrega-al-equipo.md)
+- [Demo guide](docs/GUIA-DEMO.md)
+- [Web application and worker](docs/web-worker.md)
+- [n8n workflow](docs/n8n-workflow.md)
+- [Testing and deployment](docs/pruebas-y-despliegue.md)
+- [Campaign capacity](docs/campanas-y-capacidad.md)
+- [Validation record](docs/VALIDACION.md)
+- [Future phase proposal](docs/propuesta-ghl-n8n-retell.md)
+
+## Scope and limitations
+
+- The local CRM mode is simulated and does not create real GoHighLevel contacts.
+- The included pre-screening criteria are examples and require business approval before real use.
+- Production deployment, live CRM credentials, voice calls, and recruiter notifications are outside the current prototype.
+- Use fictional candidate data for local demonstrations.
+- Keep real credentials in local environment files or deployment settings; never commit them to the repository.
